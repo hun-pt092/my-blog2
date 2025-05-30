@@ -1,0 +1,76 @@
+import dotenv from 'dotenv';
+import db from './src/lib/db.js';
+
+dotenv.config();
+
+const NODE_ID = process.env.NODE_ID || '1';
+
+// Hàm thiết lập WebSocket
+const setupWebsocket = (io) => {
+  // Lưu trữ thông tin các user đang online
+  const connectedUsers = new Map();
+
+// Xử lý kết nối socket
+io.on('connection', (socket) => {
+  console.log(`[Node ${NODE_ID}] Client connected: ${socket.id}`);
+
+  // Xử lý khi client đăng ký theo dõi một bài viết
+  socket.on('join_post', (postSlug) => {
+    // Tham gia room dựa trên slug của bài viết
+    socket.join(`post:${postSlug}`);
+    console.log(`[Node ${NODE_ID}] Client ${socket.id} joined post: ${postSlug}`);
+  });
+
+  // Xử lý khi client rời phòng
+  socket.on('leave_post', (postSlug) => {
+    socket.leave(`post:${postSlug}`);
+    console.log(`[Node ${NODE_ID}] Client ${socket.id} left post: ${postSlug}`);
+  });
+
+  // Xử lý khi nhận bình luận mới
+  socket.on('new_comment', async (data) => {
+    try {
+      // Lưu bình luận vào database
+      const { post_id, author, content } = data;
+      
+      // Validate dữ liệu
+      if (!post_id || !author || !content) {
+        socket.emit('comment_error', { error: 'Invalid comment data' });
+        return;
+      }
+
+      // Insert vào database
+      const result = await db.query(
+        `INSERT INTO comments (post_id, author, content) 
+         VALUES ($1, $2, $3) 
+         RETURNING id, post_id, author, content, created_at`,
+        [post_id, author, content]
+      );
+
+      const newComment = result.rows[0];
+      
+      // Phát lại bình luận đến tất cả các client đang theo dõi bài viết
+      io.to(`post:${data.postSlug}`).emit('comment_added', {
+        id: newComment.id,
+        post_id: newComment.post_id,
+        author: newComment.author,
+        content: newComment.content,
+        created_at: newComment.created_at
+      });
+
+      console.log(`[Node ${NODE_ID}] New comment added to post ${data.postSlug}`);
+    } catch (error) {
+      console.error(`[Node ${NODE_ID}] Error adding comment:`, error);
+      socket.emit('comment_error', { error: 'Failed to add comment' });
+    }
+  });
+
+  // Xử lý khi client ngắt kết nối
+  socket.on('disconnect', () => {
+    console.log(`[Node ${NODE_ID}] Client disconnected: ${socket.id}`);
+    connectedUsers.delete(socket.id);
+  });
+});
+
+// Export hàm setup để server.js có thể sử dụng
+export default setupWebsocket;

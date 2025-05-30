@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'blog-backend'
+    static_configs:
+      - targets: ['blog-backend1:3000', 'blog-backend2:3000']
+        labels:
+          service: 'blog-backend'
+
+  - job_name: 'cockroach'
+    static_configs:
+      - targets: ['cockroach1:8080', 'cockroach2:8080', 'cockroach3:8080']
+        labels:
+          service: 'cockroach'
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-lb:80']
+        labels:
+          service: 'nginx'

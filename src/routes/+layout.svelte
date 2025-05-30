@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { siteTitle, siteURL } from '$lib/config.js';
+	import { initSocket } from '$lib/socket.js';
 	let { data, children } = $props();
 
 	const transitionIn = { delay: 150, duration: 150 };
@@ -29,10 +30,12 @@
 	 *
 	 * Any route added in src/lib/config.js will be preloaded automatically. You can add your
 	 * own preloadData() calls here, too.
-	 **/
-	onMount(() => {
+	 **/	onMount(() => {
 		const navRoutes = navItems.map((item) => item.route);
 		preloadCode(...navRoutes);
+		
+		// Khởi tạo kết nối socket cho tính năng bình luận thời gian thực
+		initSocket();
 	});
 </script>
 

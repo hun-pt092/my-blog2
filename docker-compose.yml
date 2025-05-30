@@ -9,6 +9,8 @@ services:
       - "8085:8080"  # node 1 dùng cổng 8085 thay vì 8080
     volumes:
       - cockroach-data1:/cockroach/cockroach-data
+    networks:
+      - blog-network
 
   cockroach2:
     image: cockroachdb/cockroach:v23.1.11
@@ -19,6 +21,8 @@ services:
       - "8086:8080"
     volumes:
       - cockroach-data2:/cockroach/cockroach-data
+    networks:
+      - blog-network
 
   cockroach3:
     image: cockroachdb/cockroach:v23.1.11
@@ -26,17 +30,123 @@ services:
     command: start --insecure --join=cockroach1,cockroach2,cockroach3
     ports:
       - "26259:26257"
-      - "8087:8080"
-    volumes:
+      - "8087:8080"     volumes: 
       - cockroach-data3:/cockroach/cockroach-data
+    networks:
+      - blog-network
      
   init:
     image: cockroachdb/cockroach:v23.1.11
     depends_on:
       - cockroach1
     entrypoint: ["cockroach", "init", "--insecure", "--host=cockroach1"]
+    networks:
+      - blog-network
+        blog-backend1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog-backend1
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      - cockroach1
+      - init
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://root@cockroach1:26257/blog?sslmode=disable
+      - NODE_ID=1
+      - PORT=3000
+      - WS_PORT=3001
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - blog-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s  blog-backend2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog-backend2
+    ports:
+      - "3002:3000"
+      - "3003:3001"
+    depends_on:
+      - cockroach2
+      - init
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://root@cockroach2:26257/blog?sslmode=disable
+      - NODE_ID=2
+      - PORT=3000
+      - WS_PORT=3001
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - blog-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
-volumes:
-  cockroach-data1:
+  nginx:
+    image: nginx:latest
+    container_name: nginx-lb
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - blog-backend1
+      - blog-backend2
+    networks:
+      - blog-network
+    restart: always
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - blog-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - blog-network
+    restart: always
+
+networks:
+  blog-network:
+    driver: bridge
+
+volumes:cockroach-data1:
   cockroach-data2:
   cockroach-data3:
+  redis-data:
