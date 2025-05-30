@@ -1,0 +1,42 @@
+version: '3.7'
+services:
+  cockroach1:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach1
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26257:26257"
+      - "8085:8080"  # node 1 dùng cổng 8085 thay vì 8080
+    volumes:
+      - cockroach-data1:/cockroach/cockroach-data
+
+  cockroach2:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach2
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26258:26257"
+      - "8086:8080"
+    volumes:
+      - cockroach-data2:/cockroach/cockroach-data
+
+  cockroach3:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach3
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26259:26257"
+      - "8087:8080"
+    volumes:
+      - cockroach-data3:/cockroach/cockroach-data
+     
+  init:
+    image: cockroachdb/cockroach:v23.1.11
+    depends_on:
+      - cockroach1
+    entrypoint: ["cockroach", "init", "--insecure", "--host=cockroach1"]
+
+volumes:
+  cockroach-data1:
+  cockroach-data2:
+  cockroach-data3:
