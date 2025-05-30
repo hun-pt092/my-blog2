@@ -36,21 +36,23 @@ Theo dõi log:
 
 Để theo dõi log của các container: docker-compose logs -f
 Để theo dõi log của một container cụ thể, ví dụ: docker-compose logs -f blog-backend1
+```plaintext
                     ┌─────────────┐
                     │    Nginx    │
-                    │ Load Balancer│
+                    │Load Balancer│
                     └───────┬─────┘
-                           /│\
-                          / │ \
-               ┌─────────┘  │  └─────────┐
-               │            │            │
-    ┌──────────▼──┐  ┌──────▼──┐  ┌──────▼──────┐
+                           /│\\
+                          / │ \\
+               ┌─────────┘  │  └──────────┐
+               │            │             │
+    ┌──────────▼──┐  ┌──────▼───┐  ┌──────▼──────┐
     │ SvelteKit   │  │ SvelteKit│  │  WebSocket  │
     │ Backend 1   │  │ Backend 2│  │   Server    │
-    └──────────┬──┘  └────┬─────┘  └─────────────┘
+    └──────────┬──┘  └─────┬────┘  └─────────────┘
                │           │                
     ┌──────────▼───────────▼─────────────┐
     │            CockroachDB             │
     │   (Node1)    (Node2)    (Node3)    │
     └────────────────────────────────────┘
+   ``` 
 Với kiến trúc này, hệ thống có thể mở rộng theo chiều ngang bằng cách thêm nhiều node SvelteKit và/atau CockroachDB để đáp ứng nhu cầu truy cập cao hơn.
