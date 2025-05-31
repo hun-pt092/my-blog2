@@ -24,3 +24,6 @@ export default {
   query: (text, params) => pool.query(text, params),
   getClient: () => pool.connect()
 };
+
+// Export pool separately for direct access
+export { pool };

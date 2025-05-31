@@ -134,7 +134,22 @@ const setupWebsocket = async (io) => {
       } catch (error) {
         console.error(`[Node ${NODE_ID}] Error adding comment:`, error);
         socket.emit('comment_error', { error: 'Failed to add comment' });
-      }
+      }    });
+
+    // Xử lý vote events
+    socket.on('comment_voted', (data) => {
+      const { postSlug, commentId, voteType, operation, likes, dislikes } = data;
+      
+      console.log(`[Node ${NODE_ID}] Vote event for comment ${commentId}: ${voteType} (${operation})`);
+      
+      // Broadcast vote update to all clients watching this post
+      socket.to(`post:${postSlug}`).emit('comment_vote_updated', {
+        commentId,
+        voteType,
+        operation,
+        likes,
+        dislikes
+      });
     });
 
     // Xử lý khi client ngắt kết nối

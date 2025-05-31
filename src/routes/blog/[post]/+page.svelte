@@ -1,8 +1,10 @@
 <!-- This file renders each individual blog post for reading. Be sure to update the svelte:head below -->
 <script>
+	import CommentSection from '$lib/components/CommentSection.svelte';
+	
 	let { data } = $props();
 
-	const { title, excerpt, date, updated, coverImage, coverWidth, coverHeight, categories } =
+	const { title, excerpt, date, updated, coverImage, coverWidth, coverHeight, categories, slug } =
 		data.meta;
 	const { PostContent } = data;
 </script>
@@ -56,7 +58,8 @@
 						</a>
 					</li>
 				{/each}
-			</ul>
-		</aside>
-	{/if}
+			</ul>		</aside>	{/if}
+	
+	<!-- Comment Section -->
+	<CommentSection postSlug={slug} />
 </article>

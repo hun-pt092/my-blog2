@@ -9,9 +9,7 @@
 	 */
 
 	/** @type {Props} */
-	let { closeOnly = false } = $props();
-
-	const toggleIsMenuOpen = () => {
+	let { closeOnly = false } = $props();	const toggleIsMenuOpen = () => {
 		isMenuOpen.set(!$isMenuOpen);
 	};
 </script>

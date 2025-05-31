@@ -1,43 +1,39 @@
 // src/routes/metrics/+server.js
-import { register, collectDefaultMetrics } from 'prom-client';
+import client from 'prom-client';
 import db from '$lib/db';
+
+const { register, collectDefaultMetrics, Gauge } = client;
 
 // Khởi tạo các metrics mặc định
 collectDefaultMetrics();
 
+// Khởi tạo các gauge metrics
+const dbPostsGauge = new Gauge({
+  name: 'db_posts_total',
+  help: 'Total number of blog posts'
+});
+
+const dbCommentsGauge = new Gauge({
+  name: 'db_comments_total',
+  help: 'Total number of comments'
+});
+
+// Đăng ký metrics
+register.registerMetric(dbPostsGauge);
+register.registerMetric(dbCommentsGauge);
+
 /** @type {import('./$types').RequestHandler} */
 export async function GET() {
-  try {
-    // Thêm metrics cho cơ sở dữ liệu
+  try {    // Cập nhật metrics cho cơ sở dữ liệu
     try {
       const dbResult = await db.query('SELECT count(*) FROM posts');
       const postCount = parseInt(dbResult.rows[0].count);
-      
-      const dbGauge = register.getSingleMetric('db_posts_total');
-      if (!dbGauge) {
-        const gauge = new register.Gauge({
-          name: 'db_posts_total',
-          help: 'Total number of blog posts'
-        });
-        gauge.set(postCount);
-      } else {
-        dbGauge.set(postCount);
-      }
+      dbPostsGauge.set(postCount);
       
       // Đếm số bình luận
       const commentsResult = await db.query('SELECT count(*) FROM comments');
       const commentCount = parseInt(commentsResult.rows[0].count);
-      
-      const commentGauge = register.getSingleMetric('db_comments_total');
-      if (!commentGauge) {
-        const gauge = new register.Gauge({
-          name: 'db_comments_total',
-          help: 'Total number of comments'
-        });
-        gauge.set(commentCount);
-      } else {
-        commentGauge.set(commentCount);
-      }
+      dbCommentsGauge.set(commentCount);
     } catch (error) {
       console.error('Error collecting DB metrics:', error);
     }

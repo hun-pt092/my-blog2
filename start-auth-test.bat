@@ -1,0 +1,6 @@
+@echo off
+echo Starting Blog System with Authentication...
+echo.
+echo Starting SvelteKit Development Server...
+cd /d "c:\project\my-blog2"
+npm run dev
