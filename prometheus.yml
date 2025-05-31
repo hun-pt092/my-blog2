@@ -4,16 +4,24 @@ global:
 
 scrape_configs:
   - job_name: 'blog-backend'
+    metrics_path: '/metrics'
     static_configs:
       - targets: ['blog-backend1:3000', 'blog-backend2:3000']
         labels:
           service: 'blog-backend'
 
   - job_name: 'cockroach'
+    metrics_path: '/_status/vars'
     static_configs:
       - targets: ['cockroach1:8080', 'cockroach2:8080', 'cockroach3:8080']
         labels:
           service: 'cockroach'
+          
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis'
 
   - job_name: 'nginx'
     static_configs:

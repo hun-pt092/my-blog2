@@ -1,4 +1,3 @@
-// server.js for SvelteKit and WebSocket
 import dotenv from 'dotenv';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
@@ -13,25 +12,25 @@ const NODE_ID = process.env.NODE_ID || '1';
 
 console.log(`[Node ${NODE_ID}] Starting server...`);
 
-// Import handler from SvelteKit build output
+// Import handler từ build output của SvelteKit
 const startServer = async () => {
   try {
-    // Dynamic import to wait for handler.js to be created after build
+    // Dynamic import để đợi file handler.js được tạo ra sau khi build
     const { handler } = await import('./build/handler.js').catch(err => {
       console.error(`[Node ${NODE_ID}] Error importing handler:`, err);
-      // Try again with different structure (adapter-node can create different files depending on version)
+      // Thử lại với cấu trúc khác (adapter-node có thể tạo ra các file khác nhau tùy phiên bản)
       return import('./build/index.js');
     });
     
-    // Create HTTP server for SvelteKit
+    // Tạo HTTP server cho SvelteKit
     const app = createServer(handler);
     
-    // Listen for HTTP connections
+    // Lắng nghe kết nối HTTP
     app.listen(PORT, () => {
-      console.log(`[Node ${NODE_ID}] SvelteKit server running on port ${PORT}`);
+      console.log(`[Node ${NODE_ID}] SvelteKit server chạy ở cổng ${PORT}`);
     });
     
-    // Initialize WebSocket server
+    // Khởi tạo WebSocket server
     const io = new Server(WS_PORT, {
       cors: {
         origin: '*',
@@ -39,30 +38,30 @@ const startServer = async () => {
       }
     });
 
-    console.log(`[Node ${NODE_ID}] WebSocket server running on port ${WS_PORT}`);
+    console.log(`[Node ${NODE_ID}] WebSocket server chạy ở cổng ${WS_PORT}`);
     
-    // Setup WebSocket directly
-    // Track connected users
+    // Thiết lập WebSocket trực tiếp
+    // Theo dõi người dùng đang kết nối
     const connectedUsers = new Map();
 
     io.on('connection', (socket) => {
-      console.log(`[Node ${NODE_ID}] Client connected: ${socket.id}`);
+      console.log(`[Node ${NODE_ID}] Client kết nối: ${socket.id}`);
 
-      // Handle when client follows post
+      // Xử lý khi client theo dõi bài viết
       socket.on('join_post', (postSlug) => {
         socket.join(`post:${postSlug}`);
-        console.log(`[Node ${NODE_ID}] Client ${socket.id} joined post: ${postSlug}`);
+        console.log(`[Node ${NODE_ID}] Client ${socket.id} theo dõi bài viết: ${postSlug}`);
       });
 
-      // Handle when client leaves post
+      // Xử lý khi client rời khỏi bài viết
       socket.on('leave_post', (postSlug) => {
         socket.leave(`post:${postSlug}`);
-        console.log(`[Node ${NODE_ID}] Client ${socket.id} left post: ${postSlug}`);
+        console.log(`[Node ${NODE_ID}] Client ${socket.id} rời khỏi bài viết: ${postSlug}`);
       });
       
-      // Handle when client sends new comment
+      // Xử lý khi client gửi comment mới
       socket.on('new_comment', (data) => {
-        console.log(`[Node ${NODE_ID}] New comment:`, data);
+        console.log(`[Node ${NODE_ID}] Comment mới:`, data);
         io.to(`post:${data.postSlug}`).emit('comment_added', {
           id: Date.now().toString(),
           author: data.author,
@@ -71,9 +70,9 @@ const startServer = async () => {
         });
       });
       
-      // Handle when client disconnects
+      // Xử lý khi client ngắt kết nối
       socket.on('disconnect', () => {
-        console.log(`[Node ${NODE_ID}] Client disconnected: ${socket.id}`);
+        console.log(`[Node ${NODE_ID}] Client ngắt kết nối: ${socket.id}`);
         connectedUsers.delete(socket.id);
       });
     });
@@ -84,7 +83,7 @@ const startServer = async () => {
   }
 };
 
-// Start server
+// Bắt đầu server
 startServer().catch(err => {
   console.error(`[Node ${NODE_ID}] Failed to import SvelteKit handler:`, err);
 });

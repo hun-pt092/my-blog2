@@ -1,4 +1,4 @@
-version: '3.7'
+
 services:
   cockroach1:
     image: cockroachdb/cockroach:v23.1.11
@@ -30,7 +30,8 @@ services:
     command: start --insecure --join=cockroach1,cockroach2,cockroach3
     ports:
       - "26259:26257"
-      - "8087:8080"     volumes: 
+      - "8087:8080"
+    volumes:
       - cockroach-data3:/cockroach/cockroach-data
     networks:
       - blog-network
@@ -42,7 +43,8 @@ services:
     entrypoint: ["cockroach", "init", "--insecure", "--host=cockroach1"]
     networks:
       - blog-network
-        blog-backend1:
+      
+  blog-backend1:
     build:
       context: .
       dockerfile: Dockerfile
@@ -69,7 +71,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s  blog-backend2:
+      start_period: 20s
+      
+  blog-backend2:
     build:
       context: .
       dockerfile: Dockerfile
@@ -146,7 +150,8 @@ networks:
   blog-network:
     driver: bridge
 
-volumes:cockroach-data1:
+volumes:
+  cockroach-data1:
   cockroach-data2:
   cockroach-data3:
   redis-data:
