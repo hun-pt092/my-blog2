@@ -29,14 +29,13 @@ const pool = new Pool({
 
 // Kiểm tra kết nối khi server khởi động
 pool.connect()
-  .then(client => {
-    console.log('Connected to CockroachDB successfully');
-    client.release();
-  })
-  .catch(err => {
-    console.error('Error connecting to CockroachDB:', err);
-  });
+  .then(() => console.log('Connected to CockroachDB successfully'))
+  .catch(err => console.error('Failed to connect to CockroachDB:', err));
 
+// Export pool as db for use in other modules
+export const db = pool;
+
+// Export default object for compatibility with existing code
 export default {
   query: (text, params) => pool.query(text, params),
   getClient: () => pool.connect()

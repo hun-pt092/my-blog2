@@ -116,12 +116,14 @@ export const POST = async ({ request, url }) => {
       userObject: user,
       availableFields: Object.keys(user)
     });
+      // Lấy thời gian hiện tại từ server
+    const now = new Date();
     
     const result = await db.query(
-      `INSERT INTO comments (post_id, user_id, author, content) 
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO comments (post_id, user_id, author, content, created_at) 
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id, content, created_at`,
-      [postId, user.id, authorName, content.trim()]
+      [postId, user.id, authorName, content.trim(), now]
     );
 
     const newComment = {

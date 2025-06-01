@@ -40,41 +40,48 @@ const startServer = async () => {
     });
 
     console.log(`[Node ${NODE_ID}] WebSocket server running on port ${WS_PORT}`);
-    
-    // Setup WebSocket directly
-    // Track connected users
-    const connectedUsers = new Map();
-
-    io.on('connection', (socket) => {
-      console.log(`[Node ${NODE_ID}] Client connected: ${socket.id}`);
-
-      // Handle when client follows post
-      socket.on('join_post', (postSlug) => {
-        socket.join(`post:${postSlug}`);
-        console.log(`[Node ${NODE_ID}] Client ${socket.id} joined post: ${postSlug}`);
-      });
-
-      // Handle when client leaves post
-      socket.on('leave_post', (postSlug) => {
-        socket.leave(`post:${postSlug}`);
-        console.log(`[Node ${NODE_ID}] Client ${socket.id} left post: ${postSlug}`);
-      });
+      // Setup WebSocket using websocket-handler.js
+    import('./websocket-handler.js').then(({ default: setupWebsocket }) => {
+      setupWebsocket(io);
+    }).catch(err => {
+      console.error(`[Node ${NODE_ID}] Error importing websocket-handler:`, err);
       
-      // Handle when client sends new comment
-      socket.on('new_comment', (data) => {
-        console.log(`[Node ${NODE_ID}] New comment:`, data);
-        io.to(`post:${data.postSlug}`).emit('comment_added', {
-          id: Date.now().toString(),
-          author: data.author,
-          content: data.content,
-          created_at: new Date().toISOString()
+      // Fallback basic handler if websocket-handler.js import fails
+      console.log(`[Node ${NODE_ID}] Using fallback WebSocket handler`);
+      
+      const connectedUsers = new Map();
+
+      io.on('connection', (socket) => {
+        console.log(`[Node ${NODE_ID}] Client connected: ${socket.id}`);
+  
+        // Handle when client follows post
+        socket.on('join_post', (postSlug) => {
+          socket.join(`post:${postSlug}`);
+          console.log(`[Node ${NODE_ID}] Client ${socket.id} joined post: ${postSlug}`);
         });
-      });
-      
-      // Handle when client disconnects
-      socket.on('disconnect', () => {
-        console.log(`[Node ${NODE_ID}] Client disconnected: ${socket.id}`);
-        connectedUsers.delete(socket.id);
+  
+        // Handle when client leaves post
+        socket.on('leave_post', (postSlug) => {
+          socket.leave(`post:${postSlug}`);
+          console.log(`[Node ${NODE_ID}] Client ${socket.id} left post: ${postSlug}`);
+        });
+        
+        // Handle when client sends new comment
+        socket.on('new_comment', (data) => {
+          console.log(`[Node ${NODE_ID}] New comment:`, data);
+          io.to(`post:${data.postSlug}`).emit('comment_added', {
+            id: Date.now().toString(),
+            author: data.author,
+            content: data.content,
+            created_at: new Date().toISOString()
+          });
+        });
+        
+        // Handle when client disconnects
+        socket.on('disconnect', () => {
+          console.log(`[Node ${NODE_ID}] Client disconnected: ${socket.id}`);
+          connectedUsers.delete(socket.id);
+        });
       });
     });
     

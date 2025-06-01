@@ -79,9 +79,8 @@ const setupWebsocket = async (io) => {
       try {
         // Lưu bình luận vào database
         const { post_id, author, content, postSlug } = data;
-        
-        // Validate dữ liệu
-        if (!post_id || !author || !content) {
+            // Validate dữ liệu
+        if (!postSlug || !author || !content) {
           socket.emit('comment_error', { error: 'Invalid comment data' });
           commentsCounter.inc({ node_id: NODE_ID, status: 'invalid' });
           commentTimer();

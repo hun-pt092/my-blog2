@@ -46,14 +46,23 @@
       socket.emit('join_post', postSlug);
     });    // Lắng nghe sự kiện bình luận mới
     socket.on('comment_added', (newComment) => {
-      console.log('New comment received:', newComment);
+      console.log('New comment received via WebSocket:', newComment);
+      
+      // Kiểm tra nếu comment này từ chính người dùng hiện tại 
+      // (để tránh hiển thị duplicate vì chúng ta đã thêm đó khi gửi)
+      if (newComment.author === ($user.display_name || $user.username)) {
+        console.log('Ignoring own comment received via WebSocket');
+        return;
+      }
+      
       // Kiểm tra duplicate để tránh hiển thị comment 2 lần
       const exists = comments.find(c => c.id === newComment.id);
       if (!exists) {
+        console.log('Adding new comment from WebSocket to UI');
         comments = [newComment, ...comments]; // Thêm vào đầu list
         commentCount += 1;
       }
-    });    // Lắng nghe cập nhật số lượng comment
+    });// Lắng nghe cập nhật số lượng comment
     socket.on('comment_count_updated', (data) => {
       commentCount = data.count;
     });
@@ -157,9 +166,23 @@
         }
         throw new Error(data.error || 'Failed to submit comment');
       }
+        // Thêm bình luận vào giao diện người dùng ngay lập tức
+      const localComment = {
+        id: data.comment?.id || `temp-${Date.now()}`,
+        author: $user.display_name || $user.username,
+        content: newComment.content,
+        created_at: new Date().toISOString(),
+        likes: 0,
+        dislikes: 0
+      };
       
-      // Nếu submit thành công qua API, gửi realtime thông qua socket
+      // Thêm bình luận vào đầu danh sách
+      comments = [localComment, ...comments];
+      commentCount += 1;
+      
+      // Nếu submit thành công qua API, gửi realtime thông qua socket cho các người dùng khác
       if (socket && socket.connected) {
+        console.log('Emitting new_comment event via WebSocket', { postSlug, postId });
         socket.emit('new_comment', {
           post_id: postId,
           postSlug,
@@ -335,21 +358,31 @@
     } finally {
       votingStates.delete(commentId);
       votingStates = votingStates; // Trigger reactivity
-    }
-  }
+    }  }
 
   // Format thời gian
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
-    
-    if (diffInSeconds < 60) return 'just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    
-    return format(date, 'MMM d, yyyy');
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      
+      // Đảm bảo thời gian không trong tương lai
+      if (date > now) {
+        return 'just now';
+      }
+      
+      const diffInSeconds = Math.floor((now - date) / 1000);
+      
+      if (diffInSeconds < 60) return 'just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minute${Math.floor(diffInSeconds / 60) !== 1 ? 's' : ''} ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hour${Math.floor(diffInSeconds / 3600) !== 1 ? 's' : ''} ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} day${Math.floor(diffInSeconds / 86400) !== 1 ? 's' : ''} ago`;
+      
+      return format(date, 'MMM d, yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   }
 
   // Reactive statement: fetch user votes when authentication state changes

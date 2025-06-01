@@ -61,5 +61,12 @@
 			</ul>		</aside>	{/if}
 	
 	<!-- Comment Section -->
-	<CommentSection postSlug={slug} />
+	{#if data.dbPost}
+		<CommentSection postSlug={data.dbPost.slug} postId={data.dbPost.id} />
+	{:else}
+		<div class="comment-warning">
+			<p>Hệ thống bình luận không khả dụng cho bài viết này.</p>
+			<p>Vui lòng thử lại sau hoặc liên hệ admin.</p>
+		</div>
+	{/if}
 </article>
