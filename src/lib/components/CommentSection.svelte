@@ -351,6 +351,11 @@
     
     return format(date, 'MMM d, yyyy');
   }
+
+  // Reactive statement: fetch user votes when authentication state changes
+  $: if ($isAuthenticated && comments.length > 0) {
+    fetchUserVotes();
+  }
 </script>
 
 <div class="comments-section">

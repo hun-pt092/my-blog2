@@ -1,6 +1,6 @@
 ---
 title: "Tiến trình & Luồng"
-slug: "he-thong-phan-tan"
+slug: "tien-trinh-luong"
 date: "2025-05-04"
 excerpt: "Nói về hiệu năng máy tính của tôi, các bài toán sử dụng đa luồng đa tiến trình."
 coverImage: "/images/tien_trinh.png"

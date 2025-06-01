@@ -1,6 +1,6 @@
 ---
 title: "Deliverable 1: Đề xuất đề tài và mô tả vấn đề"
-slug: "he-thong-phan-tan"
+slug: "mo-ta-van-de"
 date: "2025-05-10"
 categories: ["web blog"]
 ---

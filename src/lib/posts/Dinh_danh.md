@@ -1,6 +1,6 @@
 ---
 title: "Tìm hiểu về Định danh"
-slug: "he-thong-phan-tan"
+slug: "Tim-hieu-dinh-danh"
 date: "2025-05-15"
 coverImage: "/images/dinhdanh.png"
 categories: ["công nghệ", "hệ thống phân tán"]

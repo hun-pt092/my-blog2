@@ -23,7 +23,6 @@ services:
       - cockroach-data2:/cockroach/cockroach-data
     networks:
       - blog-network
-
   cockroach3:
     image: cockroachdb/cockroach:v23.1.11
     container_name: cockroach3
@@ -43,7 +42,7 @@ services:
     entrypoint: ["cockroach", "init", "--insecure", "--host=cockroach1"]
     networks:
       - blog-network
-      
+
   blog-backend1:
     build:
       context: .
@@ -63,6 +62,7 @@ services:
       - WS_PORT=3001
       - NODE_ENV=development
       - REDIS_URL=redis://redis:6379
+      - IS_DOCKER=true
     networks:
       - blog-network
     restart: always
@@ -92,6 +92,7 @@ services:
       - WS_PORT=3001
       - NODE_ENV=development
       - REDIS_URL=redis://redis:6379
+      - IS_DOCKER=true
     networks:
       - blog-network
     restart: always

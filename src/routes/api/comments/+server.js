@@ -40,7 +40,9 @@ export const GET = async ({ url, params }) => {
     const countResult = await db.query(
       'SELECT COUNT(*) as count FROM comments WHERE post_id = $1',
       [postId]
-    );    // Now get all comments for this post with user information
+    );
+
+    // Now get all comments for this post with user information
     const commentResult = await db.query(
       `SELECT c.id, c.content, c.created_at, c.likes, c.dislikes,
               u.username, u.display_name, u.avatar_url
@@ -49,7 +51,9 @@ export const GET = async ({ url, params }) => {
        WHERE c.post_id = $1 
        ${orderClause}`,
       [postId]
-    );    // Return comments with count
+    );
+
+    // Return comments with count
     return json({
       comments: commentResult.rows.map(comment => ({
         id: comment.id,
@@ -102,30 +106,45 @@ export const POST = async ({ request, url }) => {
       return json({ error: 'Comment too long (max 2000 characters)' }, { status: 400 });
     }
 
-    // Insert the comment with user_id
+    // Insert the comment with user_id and author
+    const authorName = user.displayName || user.username || 'Anonymous';
+    console.log('Debug - About to insert comment with:', {
+      postId,
+      userId: user.id,
+      author: authorName,
+      content: content.trim(),
+      userObject: user,
+      availableFields: Object.keys(user)
+    });
+    
     const result = await db.query(
-      `INSERT INTO comments (post_id, user_id, content) 
-       VALUES ($1, $2, $3)
+      `INSERT INTO comments (post_id, user_id, author, content) 
+       VALUES ($1, $2, $3, $4)
        RETURNING id, content, created_at`,
-      [postId, user.id, content.trim()]
+      [postId, user.id, authorName, content.trim()]
     );
 
     const newComment = {
       id: result.rows[0].id,
-      author: user.display_name || user.username,
+      author: authorName,
       content: result.rows[0].content,
       created_at: result.rows[0].created_at,
       likes: 0,
       dislikes: 0,
-      avatar_url: user.avatar_url
+      avatar_url: user.avatarUrl
     };
 
     // Return the new comment
     return json({
       comment: newComment
     }, { status: 201 });
+    
   } catch (error) {
     console.error('Error adding comment:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Error detail:', error.detail);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     
     if (error.message.includes('authentication')) {
       return json({ error: 'Authentication required to post comments' }, { status: 401 });

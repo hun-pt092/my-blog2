@@ -1,6 +1,6 @@
 ---
 title: "Tìm hiểu về Kiến trúc HPT"
-slug: "he-thong-phan-tan"
+slug: "kien-truc-hpt"
 date: "2025-05-18"
 coverImage: "/images/kien_trucHPT.png"
 categories: ["công nghệ", "hệ thống phân tán"]

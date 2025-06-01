@@ -11,10 +11,15 @@ RUN npm install @sveltejs/adapter-node --save-dev
 # Copy source code
 COPY . .
 
+# Copy riêng file +server.js bị nghi ngờ
+COPY src/routes/api/comments/vote/+server.js ./src/routes/api/comments/vote/+server.js
+
+
 # Build the app
 RUN npm run build
 
 # Expose ports
+
 EXPOSE 3000
 EXPOSE 3001
 

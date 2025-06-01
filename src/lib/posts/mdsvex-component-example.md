@@ -2,6 +2,7 @@
 title: "A Markdown post with a Svelte component"
 date: "2023-04-28"
 updated: "2023-04-28"
+slug: "mdsvex-component-example"
 categories:
   - "sveltekit"
   - "markdown"

@@ -2,13 +2,18 @@ import { error } from '@sveltejs/kit'
 
 export const load = async ({ params }) => {
 	try {	
-		const post = await import(`../../../lib/posts/${params.post}.md`)
+		// Decode URL-encoded parameters to handle special characters like &
+		const decodedSlug = decodeURIComponent(params.post)
+		console.log('Loading post with slug:', decodedSlug, 'from params:', params.post)
+		
+		const post = await import(`../../../lib/posts/${decodedSlug}.md`)
 
 		return {
 			PostContent: post.default,
-			meta: { ...post.metadata, slug: params.post } 
+			meta: { ...post.metadata, slug: decodedSlug } 
 		}
 	} catch(err) {
-		error(404, err);
+		console.error('Error loading post:', params.post, 'decoded:', decodeURIComponent(params.post), err)
+		error(404, `Post not found: ${params.post}`);
 	}
 }

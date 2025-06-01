@@ -1,6 +1,7 @@
 ---
 title: "Truyền thông"
 date: "2025-05-05"
+slug: "truyen_thong"
 excerpt: "các bài tập."
 coverImage: "/images/truyen-thong.png"
 categories: ["công nghệ", "hệ thống phân tán"]
