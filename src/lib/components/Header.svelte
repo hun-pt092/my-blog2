@@ -98,8 +98,7 @@
 									<div class="user-email">{$user.email}</div>
 								</div>
 							</div>
-							<hr />
-							<button class="menu-item" onclick={handleLogout}>
+							<hr />							<button class="auth-btn login-btn logout-btn" onclick={handleLogout}>
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
 								</svg>
@@ -186,6 +185,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		z-index: 900;
 	}
 
 	.auth-buttons {
@@ -219,36 +219,45 @@
 		color: white;
 		border-color: var(--color-primary);
 	}
-
 	.register-btn:hover {
 		background: var(--color-primary-dark, #2563eb);
+	}
+	
+	.logout-btn {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0.5rem 1rem;
+		width: calc(100% - 2rem);
+		justify-content: center;
 	}
 
 	.user-menu-container {
 		position: relative;
 	}
-
 	.user-button {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem;
-		background: transparent;
+		gap: 0.75rem;
+		padding: 0.5rem 0.75rem;
+		background: var(--color-bg-1);
 		border: 1px solid var(--color-border);
 		border-radius: 8px;
 		cursor: pointer;
 		transition: all 0.2s;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
-
 	.user-button:hover {
-		background: var(--color-bg-1);
+		background: var(--color-bg-2, #f1f5f9);
+		border-color: skyblue;
+		box-shadow: 0 0 0 1px rgba(135, 206, 235, 0.3);
 	}
-
 	.user-avatar {
 		width: 32px;
 		height: 32px;
 		border-radius: 50%;
-		background: var(--color-primary);
+		background: skyblue;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -256,6 +265,7 @@
 		font-weight: 600;
 		font-size: 0.875rem;
 		overflow: hidden;
+		border: 2px solid skyblue;
 	}
 
 	.user-avatar.large {
@@ -268,27 +278,24 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-	}
-
-	.user-name {
-		font-weight: 500;
-		color: var(--color-text);
+	}	.user-name {
+		font-weight: 600;
+		color: skyblue;
 		max-width: 120px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.chevron {
-		color: var(--color-text-secondary);
+		font-size: 0.95rem;
+		text-shadow: 0 0 1px rgba(0,0,0,0.1);
+	}	.chevron {
+		color: skyblue;
 		transition: transform 0.2s;
+		stroke-width: 2.5;
 	}
 
 	.chevron.rotated {
 		transform: rotate(180deg);
-	}
-
-	.user-menu {
+	}.user-menu {
 		position: absolute;
 		top: calc(100% + 0.5rem);
 		right: 0;
@@ -297,7 +304,8 @@
 		border-radius: 8px;
 		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 		min-width: 240px;
-		z-index: 100;
+		z-index: 1100;
+		padding-bottom: 0.5rem;
 	}
 
 	.user-info {
@@ -305,21 +313,21 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 1rem;
-	}
-
-	.user-display-name {
-		font-weight: 500;
-		color: var(--color-text);
+	}	.user-display-name {
+		font-weight: 600;
+		color: skyblue;
 		margin-bottom: 0.25rem;
+		font-size: 1rem;
+		text-shadow: 0 0 1px rgba(0,0,0,0.1);
 	}
 
 	.user-email {
 		font-size: 0.875rem;
-		color: var(--color-text-secondary);
+		color: var(--color-text);
 	}
-
 	.user-menu hr {
 		margin: 0;
+		margin-bottom: 0.5rem;
 		border: none;
 		height: 1px;
 		background: var(--color-border);
@@ -341,7 +349,7 @@
 
 	.menu-item:hover {
 		background: var(--color-bg-1);
-	}	/* Navigation styling */
+	}/* Navigation styling */
 	:global(.main-nav) {
 		grid-column: 2;
 		justify-self: center;
@@ -387,7 +395,7 @@
 			visibility: unset !important;
 		}
 
-		/* Mobile navigation list styles */
+	/* Mobile navigation list styles */
 		:global(.main-nav ul) {
 			display: flex !important;
 			flex-direction: column !important;
@@ -397,7 +405,7 @@
 			gap: 1rem !important;
 			align-items: center !important;
 			border-top: none !important;
-			width: auto !important;
+			width: 100% !important;
 		}
 
 		:global(.main-nav li) {
@@ -481,34 +489,49 @@
 	}	@media (max-width: 768px) {
 		.header-bottom {
 			display: flex;
-			justify-content: space-between;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.75rem;
 		}
 
 		.left-section {
 			grid-column: unset;
 			justify-self: unset;
+			width: 100%;
+			display: flex;
+			justify-content: flex-start;
 		}
 
 		.auth-section {
 			grid-column: unset;
 			justify-self: unset;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			order: 3;
+			margin-top: 0.5rem;
 		}
 		/* Show hamburger menu on mobile */
 		:global(.hamburger-menu-button) {
 			display: block !important;
 		}
-
 		.user-name {
-			display: none;
+			display: block;
+			max-width: 80px;
+			font-size: 0.85rem;
 		}
-
 		.auth-buttons {
-			gap: 0.25rem;
+			gap: 0.5rem;
+			display: flex;
+			justify-content: center;
+			width: 100%;
 		}
 
 		.auth-btn {
-			padding: 0.375rem 0.75rem;
-			font-size: 0.8125rem;
+			padding: 0.5rem 1rem;
+			font-size: 0.875rem;
+			flex: 1;
+			max-width: 120px;
 		}
 
 		/* Ensure navigation is hidden on mobile by default */

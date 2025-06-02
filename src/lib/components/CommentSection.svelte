@@ -391,10 +391,7 @@
   }
 </script>
 
-<div class="comments-section">
-  <div style="background: #ffffcc; border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-    ✅ CommentSection Loaded! PostSlug: <strong>{postSlug}</strong> | Comments: {comments.length}
-  </div>
+<div class="comments-section">  <!-- Comment section container -->
   
   <!-- Comment Header -->
   <div class="comments-header">
