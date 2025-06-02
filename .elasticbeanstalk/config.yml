@@ -1,0 +1,35 @@
+# Cấu hình cho AWS Elastic Beanstalk
+AWSConfigurationTemplateVersion: 1.1.0.0
+Platform:
+  PlatformArn: arn:aws:elasticbeanstalk:ap-southeast-1::platform/Node.js running on 64bit Amazon Linux/5.4.0
+EnvironmentTier:
+  Name: WebServer
+  Type: Standard
+
+OptionSettings:
+  aws:elasticbeanstalk:environment:
+    EnvironmentType: LoadBalanced
+    LoadBalancerType: application
+    ServiceRole: aws-elasticbeanstalk-service-role
+  
+  aws:elasticbeanstalk:application:
+    Application Healthcheck URL: /api/health
+  
+  aws:autoscaling:launchconfiguration:
+    InstanceType: t3.small
+    IamInstanceProfile: aws-elasticbeanstalk-ec2-role
+    SecurityGroups: sg-xxxxxxxx
+  
+  aws:autoscaling:asg:
+    MinSize: 2
+    MaxSize: 4
+  
+  aws:elasticbeanstalk:environment:proxy:
+    ProxyServer: nginx
+  
+  aws:elasticbeanstalk:application:environment:
+    NODE_ENV: production
+    PORT: 3000
+    DATABASE_URL: ${DATABASE_URL}
+    JWT_SECRET: ${JWT_SECRET}
+    REDIS_URL: ${REDIS_URL}

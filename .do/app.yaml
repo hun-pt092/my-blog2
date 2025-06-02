@@ -1,0 +1,37 @@
+# Cấu hình cho Digital Ocean App Platform
+name: blog-distributed-system
+services:
+  - name: web
+    github:
+      repo: yourusername/blog-repo
+      branch: main
+    build_command: npm run build
+    run_command: node server.js
+    envs:
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        secret: true
+    instance_count: 3
+    instance_size_slug: basic-s
+
+  - name: websocket
+    github:
+      repo: yourusername/blog-repo
+      branch: main
+    run_command: node websocket-server.js
+    envs:
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+      - key: NODE_ENV
+        value: production
+    instance_count: 2
+    instance_size_slug: basic-s
+
+databases:
+  - engine: pg
+    name: blog-db
+    cluster_name: cockroach-cluster
+    production: true

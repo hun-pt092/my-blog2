@@ -1,0 +1,162 @@
+version: '3.8'
+
+# Docker Compose cho môi trường production
+services:
+  # Cơ sở dữ liệu phân tán CockroachDB
+  cockroach1:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach1
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26257:26257"
+      - "8085:8080"
+    volumes:
+      - cockroach-data1:/cockroach/cockroach-data
+    restart: always
+    networks:
+      - blog-network
+
+  cockroach2:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach2
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26258:26257"
+      - "8086:8080"
+    volumes:
+      - cockroach-data2:/cockroach/cockroach-data
+    restart: always
+    networks:
+      - blog-network
+
+  cockroach3:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach3
+    command: start --insecure --join=cockroach1,cockroach2,cockroach3
+    ports:
+      - "26259:26257" 
+      - "8087:8080"
+    volumes:
+      - cockroach-data3:/cockroach/cockroach-data
+    restart: always
+    networks:
+      - blog-network
+
+  # Khởi tạo cụm CockroachDB
+  cockroach-init:
+    image: cockroachdb/cockroach:v23.1.11
+    container_name: cockroach-init
+    command: init --insecure --host=cockroach1
+    depends_on:
+      - cockroach1
+      - cockroach2
+      - cockroach3
+    networks:
+      - blog-network
+
+  # Redis cho WebSocket
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - blog-network
+
+  # SvelteKit App
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://root@cockroach1:26257/blog?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3000
+    depends_on:
+      - cockroach1
+      - redis
+    restart: always
+    networks:
+      - blog-network
+
+  # WebSocket Server
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: websocket
+    command: node websocket-server.js
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://root@cockroach1:26257/blog?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+    depends_on:
+      - cockroach1
+      - redis
+    restart: always
+    networks:
+      - blog-network
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./build:/usr/share/nginx/html
+    depends_on:
+      - app
+      - websocket
+    restart: always
+    networks:
+      - blog-network
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: always
+    networks:
+      - blog-network
+
+  # Grafana Dashboard  
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3003:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+    restart: always
+    networks:
+      - blog-network
+
+volumes:
+  cockroach-data1:
+  cockroach-data2:
+  cockroach-data3:
+  prometheus-data:
+
+networks:
+  blog-network:
+    driver: bridge

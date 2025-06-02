@@ -26,18 +26,27 @@ export const performanceStore = writable({
 export function initSocket() {
   if (!browser) return;
 
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.hostname;
-  const wsPort = 3001; // Port cho websocket
-  const wsUrl = `${protocol}//${host}:${wsPort}`;
+  // Kiểm tra nếu đang chạy trên Netlify
+  const isNetlify = window.location.hostname.includes('netlify.app');
   
-  console.log(`Initializing socket connection to ${wsUrl}`);
+  let socketUrl;
+  if (isNetlify) {
+    // Sử dụng Netlify Functions cho WebSocket trên production
+    socketUrl = window.location.origin;
+  } else {
+    // Cho môi trường development
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const wsPort = 3001; // Port cho websocket
+    socketUrl = `${protocol}//${host}:${wsPort}`;
+  }  console.log(`Initializing socket connection to ${socketUrl}`);
   
   // Tạo kết nối socket với retry và timeout
-  const socket = io(wsUrl, {
+  const socket = io(socketUrl, {
     reconnectionDelayMax: 10000,
     reconnectionAttempts: 10,
-    timeout: 20000
+    timeout: 20000,
+    path: isNetlify ? '/.netlify/functions/socket-io' : undefined
   });
   
   // Xử lý sự kiện kết nối

@@ -1,0 +1,2 @@
+// Server endpoint không cần prerender
+export const prerender = false;

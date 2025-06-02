@@ -1,4 +1,5 @@
-import adapter from '@sveltejs/adapter-node';
+import netlifyAdapter from '@sveltejs/adapter-netlify';
+import vercelAdapter from '@sveltejs/adapter-vercel';
 import { mdsvex } from 'mdsvex';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeSlug from 'rehype-slug';
@@ -8,28 +9,27 @@ const config = {
 	// Ensures both .svelte and .md files are treated as components (can be imported and used anywhere, or used as pages)
 	extensions: [".svelte", ".md"],
 	kit: {
-		adapter: adapter({
-			// Câu hình adapter để tạo phần động cho API thời gian thực
-			fallback: 'index.html',
-			precompress: false,
-			strict: true
-		}),
+		// Chọn adapter dựa vào biến môi trường ADAPTER
+		adapter: process.env.ADAPTER === 'netlify' 
+			? netlifyAdapter({
+				// Cấu hình adapter cho Netlify
+				edge: false,
+				split: false
+			}) 
+			: vercelAdapter(),
 		files: {
 			assets: 'static'
-		},
+		},		
 		prerender: {
-			// Disable prerender API routes for comments và các API động
-			entries: [
-				'*',
-				'/api/posts/page/*',
-				'/blog/category/*/page/',
-				'/blog/category/*/page/*',
-				'/blog/category/page/',
-				'/blog/category/page/*',
-				'/blog/page/',
-				'/blog/page/*',
-			],
-			handleHttpError: 'warn'
+			// Disable prerendering for dynamic routes
+			entries: [],
+			// Explicitly opt out of prerendering problematic routes
+			handleMissingId: 'ignore',
+			handleHttpError: ({ path, referrer, message }) => {
+				// Bỏ qua lỗi 404 cho các dynamic routes
+				if (message.includes('Not found')) return;
+				console.warn(`${path} referenced from ${referrer} - ${message}`);
+			}
 		},
 	},
 

@@ -1,0 +1,38 @@
+# Configuration cho Railway
+services:
+  web:
+    command: node server.js
+    env:
+      - NODE_ENV=production
+      - PORT=$PORT
+      - DATABASE_URL=$DATABASE_URL
+      - JWT_SECRET=$JWT_SECRET
+      - REDIS_URL=$REDIS_URL
+    deploy:
+      numReplicas: 3
+      healthcheck:
+        path: /api/health
+        interval: 10s
+        timeout: 5s
+        retries: 3
+      restartPolicy: always
+
+  websocket:
+    command: node websocket-server.js
+    env:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=$DATABASE_URL
+      - REDIS_URL=$REDIS_URL
+    deploy:
+      numReplicas: 2
+
+  redis:
+    image: redis:7
+    expose:
+      - port: 6379
+        as: 6379
+
+databases:
+  - cockroachdb
+  - redis
