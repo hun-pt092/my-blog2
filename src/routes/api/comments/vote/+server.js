@@ -24,12 +24,10 @@ export const POST = async ({ request, url }) => {
     const client = await db.getClient();
     
     try {
-      await client.query('BEGIN');
-
-      // Check if user already voted on this comment
+      await client.query('BEGIN');      // Check if user already voted on this comment
       const existingVote = await client.query(
-        'SELECT vote_type FROM comment_votes WHERE comment_id = $1 AND user_id = $2',
-        [commentId, user.id]
+        'SELECT vote_type FROM comment_votes WHERE comment_id = $1 AND (user_id = $2 OR user_identifier = $3)',
+        [commentId, user.id, user.id.toString()]
       );
 
       let operation = '';
@@ -37,11 +35,10 @@ export const POST = async ({ request, url }) => {
       if (existingVote.rows.length > 0) {
         const currentVote = existingVote.rows[0].vote_type;
         
-        if (currentVote === voteType) {
-          // User clicked same vote button - remove vote
+        if (currentVote === voteType) {          // User clicked same vote button - remove vote
           await client.query(
-            'DELETE FROM comment_votes WHERE comment_id = $1 AND user_id = $2',
-            [commentId, user.id]
+            'DELETE FROM comment_votes WHERE comment_id = $1 AND (user_id = $2 OR user_identifier = $3)',
+            [commentId, user.id, user.id.toString()]
           );
           
           // Update comment counts
@@ -58,11 +55,10 @@ export const POST = async ({ request, url }) => {
           }
           
           operation = 'removed';
-        } else {
-          // User switched vote - update existing vote
+        } else {          // User switched vote - update existing vote
           await client.query(
-            'UPDATE comment_votes SET vote_type = $1 WHERE comment_id = $2 AND user_id = $3',
-            [voteType, commentId, user.id]
+            'UPDATE comment_votes SET vote_type = $1 WHERE comment_id = $2 AND (user_id = $3 OR user_identifier = $4)',
+            [voteType, commentId, user.id, user.id.toString()]
           );
           
           // Update comment counts (remove old vote, add new vote)
@@ -79,12 +75,11 @@ export const POST = async ({ request, url }) => {
           }
           
           operation = 'switched';
-        }
-      } else {
-        // New vote
+        }      } else {
+        // New vote - gửi cả user_id và user_identifier để tương thích với schema DB
         await client.query(
-          'INSERT INTO comment_votes (comment_id, user_id, vote_type) VALUES ($1, $2, $3)',
-          [commentId, user.id, voteType]
+          'INSERT INTO comment_votes (comment_id, user_id, user_identifier, vote_type) VALUES ($1, $2, $3, $4)',
+          [commentId, user.id, user.id.toString(), voteType]
         );
         
         // Update comment counts
@@ -107,12 +102,10 @@ export const POST = async ({ request, url }) => {
       const updatedComment = await client.query(
         'SELECT id, likes, dislikes FROM comments WHERE id = $1',
         [commentId]
-      );
-
-      // Get user's current vote (if any)
+      );      // Get user's current vote (if any)
       const userVote = await client.query(
-        'SELECT vote_type FROM comment_votes WHERE comment_id = $1 AND user_id = $2',
-        [commentId, user.id]
+        'SELECT vote_type FROM comment_votes WHERE comment_id = $1 AND (user_id = $2 OR user_identifier = $3)',
+        [commentId, user.id, user.id.toString()]
       );
 
       await client.query('COMMIT');
